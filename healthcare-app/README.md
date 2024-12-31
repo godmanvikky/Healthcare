@@ -76,7 +76,7 @@ npm start
 Feel free to contribute by opening issues or submitting pull requests.
 
 ## 📞 Support
-For any inquiries, please reach out to [support@example.com](mailto:support@example.com).
+For any inquiries, please reach out to [wish.vignesh95@gmail.com](mailto:wish.vignesh95@gmail.com).
 
 ## 📝 License
-This project is licensed under the MIT License.
+Yet to be Licenced.
