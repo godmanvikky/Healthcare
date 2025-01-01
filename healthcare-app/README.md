@@ -14,7 +14,7 @@ This healthcare web application facilitates real-time appointment booking, presc
 
 ## 🛠️ Technologies Used
 - **Frontend:** Next.js, React, Apollo Client
-- **Backend:** Node.js, Express.js (via Next.js API Routes)
+- **Backend:** Node.js, Express.js (via Next.js API Routes), GraphQL
 - **Database:** MongoDB
 - **GraphQL:** For efficient data fetching and updates
 - **Styling:** Tailwind CSS
@@ -76,7 +76,7 @@ npm start
 Feel free to contribute by opening issues or submitting pull requests.
 
 ## 📞 Support
-For any inquiries, please reach out to [support@example.com](mailto:support@example.com).
+For any inquiries, please reach out to [wish.vignesh95@gmail.com](mailto:wish.vignesh95@gmail.com).
 
 ## 📝 License
-This project is licensed under the MIT License.
+Yet to be Licenced.
