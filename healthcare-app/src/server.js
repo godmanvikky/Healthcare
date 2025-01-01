@@ -4,6 +4,7 @@ import connectDB from './config/db.js';
 import { typeDefs } from './schema/index.js';
 import { resolvers } from './resolvers/index.js';
 import { protect } from './middleware/authMiddleware.js';
+import client from 'prom-client';
 
 (async () => {
   try {
@@ -13,10 +14,40 @@ import { protect } from './middleware/authMiddleware.js';
 
     const app = express();
 
-    // Debug Middleware to log headers
+    // Middleware to log incoming request headers
     app.use((req, res, next) => {
       console.log('🔑 Incoming Request Headers:', req.headers.authorization);
       next();
+    });
+
+    // ✅ Prometheus Metrics Setup
+    const collectDefaultMetrics = client.collectDefaultMetrics;
+    collectDefaultMetrics();
+
+    // Custom Prometheus Metrics
+    const httpRequestDuration = new client.Histogram({
+      name: 'http_request_duration_seconds',
+      help: 'Histogram of HTTP request durations',
+      labelNames: ['method', 'route', 'status_code'],
+      buckets: [0.1, 0.3, 0.5, 1, 1.5, 2, 3],
+    });
+
+    app.use((req, res, next) => {
+      const end = httpRequestDuration.startTimer();
+      res.on('finish', () => {
+        end({ method: req.method, route: req.path, status_code: res.statusCode });
+      });
+      next();
+    });
+
+    // Expose Prometheus Metrics Endpoint
+    app.get('/metrics', async (req, res) => {
+      try {
+        res.set('Content-Type', client.register.contentType);
+        res.end(await client.register.metrics());
+      } catch (err) {
+        res.status(500).end(err);
+      }
     });
 
     const server = new ApolloServer({
@@ -38,10 +69,11 @@ import { protect } from './middleware/authMiddleware.js';
     await server.start();
     server.applyMiddleware({ app, path: '/api/graphql' });
 
-    // Run Apollo Server on Port 4000
-    console.log(process.env.PORT)
-    app.listen( process.env.PORT, () => {
-      console.log('🚀 Apollo Server running at http://localhost:4000/api/graphql');
+    // Start the server
+    const PORT = process.env.PORT || 4000;
+    app.listen(PORT, () => {
+      console.log(`🚀 Apollo Server running at http://localhost:${PORT}/api/graphql`);
+      console.log(`📊 Prometheus metrics available at http://localhost:${PORT}/metrics`);
     });
   } catch (error) {
     console.error('❌ Server Startup Error:', error.message);
