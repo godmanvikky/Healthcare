@@ -1,6 +1,6 @@
 import { useQuery, useMutation, gql } from '@apollo/client';
 import { useEffect, useState } from 'react';
-import Header from './Header';
+import Header from '../components/Header';
 
 // ✅ GraphQL Queries and Mutations
 const GET_DOCTOR_APPOINTMENTS = gql`

@@ -12,7 +12,6 @@ export const typeDefs = gql`
     appointments: [Appointment]
     prescriptions: [Prescription]
   }
-
   # Appointment Type Definition
   type Appointment {
     id: ID!
@@ -22,7 +21,9 @@ export const typeDefs = gql`
     time: String!
     status: String!
   }
-
+  type Subscription {
+  appointmentStatusChanged(appointmentId: ID!): Appointment
+}
   type Prescription {
   id: ID!
   patient: User!

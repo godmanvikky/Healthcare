@@ -4,8 +4,9 @@ import Prescription from '../models/Prescription.js';
 import Vital from '../models/VitalData.js';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
+import pubsub from './pubsub.js';
 import { SPECIALIZATIONS } from './specialization.js';
-
+const APPOINTMENT_STATUS_CHANGED= 'APPOINTMENT_STATUS_CHANGED';
 export const resolvers = {
   Query: {
     getUser: async (_, { id }, { user }) => {
@@ -409,24 +410,34 @@ export const resolvers = {
         if (!['Pending', 'Confirmed', 'Completed', 'Cancelled'].includes(status)) {
           throw new Error('Invalid status value');
         }
-
+    
         const appointment = await Appointment.findByIdAndUpdate(
           appointmentId,
           { status },
           { new: true }
-        ).select('id patient doctor date time status') // Explicitly select `time`
+        )
         .populate('patient', 'id name email')
-         .populate('doctor', 'id name email');
-
+        .populate('doctor', 'id name email');
+    
         if (!appointment) {
           throw new Error('Appointment not found');
         }
+    
+        console.log('🚀 Publishing Appointment Status Change for:', appointment.id);
+    
+        await pubsub.publish(APPOINTMENT_STATUS_CHANGED, {
+          appointmentStatusChanged: appointment,
+        });
+    
         return appointment;
       } catch (error) {
         console.error('❌ Update Status Error:', error.message);
         throw new Error('Failed to update appointment status');
       }
-    }, 
+    }
+    ,
+    
+     
 
     // ✅ Prescribe Medicine
     // ✅ Prescribe Medicine Resolver
@@ -489,7 +500,36 @@ export const resolvers = {
         throw new Error(error.message || 'Failed to prescribe medicine');
       }
     },
-    
-
   },
+    Subscription: {
+      appointmentStatusChanged: {
+        subscribe: (_, { appointmentId }) => {
+          if (!appointmentId) {
+            throw new Error('❌ appointmentId cannot be empty.');
+          }
+  
+          console.log('🔗 Subscribing to APPOINTMENT_STATUS_CHANGED for:', appointmentId);
+  
+          // ✅ Correct usage of pubsub.subscribe
+          return pubsub.asyncIterableIterator(APPOINTMENT_STATUS_CHANGED);
+        },
+        resolve: (payload, { appointmentId }) => {
+          console.log('📡 Resolving Subscription Payload:', payload);
+  
+          if (!payload || !payload.appointmentStatusChanged) {
+            console.log('❌ Invalid subscription payload.');
+            return null;
+          }
+  
+          const payloadId = payload.appointmentStatusChanged.id?.toString();
+          const inputId = appointmentId?.toString();
+  
+          console.log('🔑 Payload ID:', payloadId);
+          console.log('🔑 Input ID:', inputId);
+  
+          return payloadId === inputId ? payload.appointmentStatusChanged : null;
+        },
+      },
+    },
+  
 };

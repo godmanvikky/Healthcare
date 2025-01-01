@@ -3,11 +3,11 @@ import bcrypt from 'bcryptjs';
 
 const userSchema = mongoose.Schema(
   {
-    name: { type: String, required: true },
-    email: { type: String, required: true, unique: true },
+    name: { type: String, required: true, index: true }, // Index for frequent name-based searches
+    email: { type: String, required: true, unique: true, index: true }, // Unique Index for email
     password: { type: String, required: true },
-    role: { type: String, enum: ['Patient', 'Doctor'], required: true },
-    specialization: { type: String, default: null }, // Specialization for Doctors
+    role: { type: String, enum: ['Patient', 'Doctor'], required: true, index: true }, // Index for role
+    specialization: { type: String, default: null }, // Only applicable for Doctors
     vitals: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Vital' }],
     appointments: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Appointment' }],
     prescriptions: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Prescription' }],
@@ -15,9 +15,19 @@ const userSchema = mongoose.Schema(
   { timestamps: true }
 );
 
-/** 
- * ✅ Middleware: Hash Password Before Saving
+/**
+ * ✅ Indexes for Optimized Queries
  */
+// Compound Index for Doctor Searches
+userSchema.index({ role: 1, specialization: 1 });
+
+// Index for Patients by Email and Role
+userSchema.index({ email: 1, role: 1 });
+
+// Index for Frequent Searches by Name and Role
+userSchema.index({ name: 1, role: 1 });
+
+// ✅ Middleware: Hash Password Before Saving
 userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next(); // Only hash if password is modified
 

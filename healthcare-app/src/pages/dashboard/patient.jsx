@@ -1,7 +1,8 @@
 import { useQuery, useMutation, gql } from '@apollo/client';
-import { useEffect, useState } from 'react';
-import Header from './Header';
-
+import { useEffect, useState, Suspense, lazy  } from 'react';
+import LiveAppointmentUpdates from './LiveAppointmentUpdates';
+const Header = lazy(() => import('../components/Header'));
+const Shimmer = lazy(() => import('../components/Shimmer'));
 
 // ✅ GraphQL Queries and Mutations
 const GET_APPOINTMENTS = gql`
@@ -104,14 +105,7 @@ const UPDATE_APPOINTMENT_DETAILS = gql`
     }
   }
 `;
-// ✅ Shimmer Placeholder Component
-const Shimmer = () => (
-  <div className="animate-pulse space-y-2">
-    <div className="h-4 bg-gray-300 rounded w-3/4"></div>
-    <div className="h-4 bg-gray-300 rounded w-1/2"></div>
-    <div className="h-4 bg-gray-300 rounded w-full"></div>
-  </div>
-);
+
 
 export default function PatientDashboard() {
   const [token, setToken] = useState('');
@@ -125,10 +119,11 @@ export default function PatientDashboard() {
   const [errorMessage, setErrorMessage] = useState('');
   const [selectedAppointmentId, setSelectedAppointmentId] = useState('');
   const [selectedAppointment, setSelectedAppointment] = useState(null); // For editing modal
-const [prescriptionAppointment, setPrescriptionAppointment] = useState(null); // For prescription modal
-const [viewingPrescription, setViewingPrescription] = useState(false); // Control prescription modal visibility
-const [prescriptionDetails, setPrescriptionDetails] = useState(null); // Store prescription details
-
+  const [prescriptionAppointment, setPrescriptionAppointment] = useState(null); // For prescription modal
+  const [viewingPrescription, setViewingPrescription] = useState(false); // Control prescription modal visibility
+  const [prescriptionDetails, setPrescriptionDetails] = useState(null); // Store prescription details
+  const [liveUpdate, setLiveUpdate] = useState(false)
+ 
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const userToken = localStorage.getItem('token');
@@ -246,19 +241,34 @@ const [prescriptionDetails, setPrescriptionDetails] = useState(null); // Store p
     
 
     // ✅ Handle Appointment Status Update
-  const handleUpdateStatus = () => {
-    if (!selectedAppointment || !selectedStatus) {
-      alert('❌ Please select a status to update.');
-      return;
-    }
+  // ✅ Handle Appointment Status Update with Subscription Support
+const handleUpdateStatus = async () => {
+  if (!selectedAppointment || !selectedStatus) {
+    alert('❌ Please select a status to update.');
+    return;
+  }
 
-    updateAppointmentStatus({
+  try {
+    console.log('🔄 Updating appointment status...');
+
+    await updateAppointmentStatus({
       variables: {
         appointmentId: selectedAppointment.id,
         status: selectedStatus,
       },
     });
-  };
+
+    console.log('✅ Appointment status updated successfully.');
+
+
+    setLiveUpdate(true)
+    alert('✅ Appointment status updated successfully!');
+  } catch (error) {
+    console.error('❌ Error updating appointment status:', error.message);
+    alert(`❌ Failed to update status: ${error.message}`);
+  }
+};
+
   // ✅ Handle Appointment Selection for Editing
   const handleEditAppointment = (appointment) => {
     setSelectedAppointment(appointment);
@@ -344,7 +354,9 @@ const [prescriptionDetails, setPrescriptionDetails] = useState(null); // Store p
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       {/* Header with Patient Name and Logout */}
-      <Header patientName={patientName} onLogout={handleLogout} />
+      <Suspense fallback={<Shimmer />}>
+          <Header patientName={patientName} onLogout={handleLogout}/>
+        </Suspense>
       <div className="max-w-4xl mx-auto bg-white shadow-lg rounded-lg p-6">
       
         <h2 className="text-2xl font-bold text-center text-blue-600 mb-6">📅 Patient Dashboard</h2>
@@ -376,6 +388,7 @@ const [prescriptionDetails, setPrescriptionDetails] = useState(null); // Store p
           </div>
 
           {/* Doctor Selection */}
+          <Suspense fallback={<Shimmer />}>
           <div className="mb-4">
             <label className="block text-gray-700 font-medium mb-1">👨‍⚕️ Select Doctor:</label>
             {doctorsLoading ? (
@@ -395,7 +408,7 @@ const [prescriptionDetails, setPrescriptionDetails] = useState(null); // Store p
               </select>
             )}
           </div>
-           
+           </Suspense>
           {/* Book Appointment Button */}
           <button
             onClick={handleBookAppointment}
@@ -418,6 +431,7 @@ const [prescriptionDetails, setPrescriptionDetails] = useState(null); // Store p
         </div>
 
         {/* 🗓️ Appointment List Section */}
+        <Suspense fallback={<Shimmer />}>
         <div>
           <h3 className="text-xl font-semibold mb-4">🗓️ Appointments for {selectedDate}</h3>
           {appointmentsLoading ? (
@@ -563,6 +577,13 @@ const [prescriptionDetails, setPrescriptionDetails] = useState(null); // Store p
 
 
         </div>
+        </Suspense>
+         {/* 📡 Live Updates Section */}
+         {liveUpdate && selectedAppointmentId && (
+          <div className="mt-6">
+            <LiveAppointmentUpdates appointmentId={selectedAppointmentId} />
+          </div>
+        )}
       </div>
     </div>
   );
