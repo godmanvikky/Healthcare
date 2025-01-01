@@ -23,7 +23,7 @@ jobs:
       - name: Run OWASP ZAP Scan
         uses: zaproxy/action-baseline@v0.6.0
         with:
-          target: 'http://localhost:4000'
+          target: 'http://localhost:3000'
           rules_file_name: '.zap/rules.tsv'
           fail_action: true
           token: '${{ secrets.ZAP_API_KEY }}'
