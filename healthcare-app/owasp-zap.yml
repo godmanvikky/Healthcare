@@ -1,0 +1,35 @@
+name: OWASP ZAP Security Scan
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  security-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Start Backend Server
+        run: |
+          npm install
+          npm run start
+
+      - name: Run OWASP ZAP Scan
+        uses: zaproxy/action-baseline@v0.6.0
+        with:
+          target: 'http://localhost:3000'
+          rules_file_name: '.zap/rules.tsv'
+          fail_action: true
+          token: '${{ secrets.ZAP_API_KEY }}'
+
+      - name: Upload ZAP Report
+        uses: actions/upload-artifact@v2
+        with:
+          name: zap-report
+          path: zap-report.html
