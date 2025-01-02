@@ -1,5 +1,5 @@
 import { useQuery, useMutation, gql } from '@apollo/client';
-import { useEffect, useState, Suspense, lazy  } from 'react';
+import React,{ useEffect, useState, Suspense, lazy  } from 'react';
 import LiveAppointmentUpdates from './LiveAppointmentUpdates';
 const Header = lazy(() => import('../components/Header'));
 const Shimmer = lazy(() => import('../components/Shimmer'));

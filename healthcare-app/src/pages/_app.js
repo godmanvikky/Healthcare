@@ -1,9 +1,10 @@
+import React from 'react';
 import '../styles/globals.css';
 import { ApolloProvider } from '@apollo/client';
 import client from '../graphql/apollo-client';
 import { AuthProvider } from '../context/AuthContext';
 
-function MyApp({ Component, pageProps }) {
+const MyApp=({ Component, pageProps })=> {
   return (
     <ApolloProvider client={client}>
       <AuthProvider>

@@ -1,5 +1,5 @@
 import { useQuery, useMutation, gql } from '@apollo/client';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Header from '../components/Header';
 
 // ✅ GraphQL Queries and Mutations
