@@ -10,6 +10,7 @@ import { WebSocketServer } from 'ws';
 import { useServer } from 'graphql-ws/lib/use/ws';
 import { createServer } from 'http';
 import pubsub from '@/resolvers/pubsub.js';
+import { graphqlQueryCounter, graphqlMutationCounter, graphqlSubscriptionCounter } from '../../server/metrics.js';
 
 const schema = makeExecutableSchema({
   typeDefs,
@@ -110,6 +111,9 @@ if (!global.wsServer) {
 export default async function handler(req, res) {
   try {
     await startApolloServer();
+    graphqlQueryCounter.inc();
+    graphqlMutationCounter.inc();
+    graphqlSubscriptionCounter.inc(); // <-- 📍 Increment the counter here for every GraphQL request
     await server.createHandler({ path: '/api/graphql' })(req, res);
   } catch (error) {
     console.error('❌ Apollo Server Handler Error:', error.message);
