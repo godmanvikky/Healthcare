@@ -1,0 +1,39 @@
+services:
+  healthcare-app:
+    build: ./healthcare-app
+    ports:
+      - "3000:3000"
+    networks:
+      - monitoring
+    restart: always
+
+  prometheus:
+    image: prom/prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - monitoring
+    restart: always
+
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "3001:3000"
+    networks:
+      - monitoring
+    restart: always
+
+  owasp-zap:
+    image: ghcr.io/zaproxy/zaproxy:stable
+    entrypoint: ["zap.sh", "-daemon", "-port", "8080", "-host", "0.0.0.0"]
+    ports:
+      - "8080:8080"
+    networks:
+      - monitoring
+    restart: always
+
+networks:
+  monitoring:
+    driver: bridge
